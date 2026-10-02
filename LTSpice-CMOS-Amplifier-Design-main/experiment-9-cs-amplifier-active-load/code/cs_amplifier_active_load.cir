@@ -1,0 +1,41 @@
+* Common Source Amplifier with Active (PMOS) Load
+* NMOS: kp=200u, VTO=0.4,  lambda=0.1   (driver, W=3.6u, L=0.18u -> W/L=20)
+* PMOS: kp=200u, VTO=-0.4, lambda=0.05  (active load, W=1u, L=10u)
+* VDD = 1.8V, CL = 10uF, Vbias = 0.014V
+
+.model nmos NMOS(kp=200u, VTO=0.4,  lambda=0.1)
+.model pmos PMOS(kp=200u, VTO=-0.4, lambda=0.05)
+
+* --- Supplies ---
+VDD    vdd   0   DC 1.8
+VBIAS  bias  0   DC 0.014
+
+* --- Input (transient: small-signal sine on top of gate bias) ---
+Vin    gate  0   SINE(0.5 1m 1k)
+* Input (AC analysis): AC 1 for direct dB gain readout
+* Vin  gate  0   AC 1
+
+* --- Coupling capacitor ---
+C1     gate  n_in  10u
+
+* --- Driver NMOS: drain=vout, gate=n_in, source=0, bulk=0 ---
+M1     vout  n_in  0    0    nmos  W=3.6u  L=0.18u
+
+* --- PMOS active load: drain=vout, gate=bias, source=vdd, bulk=vdd ---
+M2     vout  bias  vdd  vdd  pmos  W=1u    L=10u
+
+* --- Output load capacitor ---
+CL     vout  0     10u
+
+* =========================================================
+* Transient Analysis
+* Output: V(vout) vs gate signal; expect |Av| = gm*(ro1||ro2) ~ 133 V/V, 180 deg phase shift
+.tran 0 100m 90m 1m
+
+* =========================================================
+* AC Analysis (Bode plot)
+* Uncomment for AC sweep; comment out the .tran line above, and switch Vin to its AC form
+* .ac dec 1000 1 1G
+
+.backanno
+.end
